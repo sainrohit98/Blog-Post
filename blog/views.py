@@ -1,14 +1,30 @@
 from django.shortcuts import render
-
-# Create your views here.
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
-
 from django.core.paginator import Paginator
 from django.views.generic import ListView, DetailView
 from django.db.models import Count
 from .models import Post
+from django.views.generic import CreateView
+from .models import Post  
+from django.urls import reverse_lazy  # To redirect after form submission
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from django.contrib.postgres.search import TrigramSimilarity
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Post, Comment
+
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth import logout
+from django.views.generic import UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.urls import reverse_lazy
+from .models import Post
+
+
+
 
 def signup(request):
     if request.method == 'POST':
@@ -26,14 +42,11 @@ def signup(request):
 
 
 
-from django.views.generic import CreateView
-from .models import Post  # Import your Post model
-from django.urls import reverse_lazy  # To redirect after form submission
 
 class PostCreateView(CreateView):
     model = Post
-    template_name = 'post_form.html'  # This is the template for the form
-    fields = ['title', 'content', 'tags']  # Adjust fields based on your Post model
+    template_name = 'post_form.html'  
+    fields = ['title', 'content', 'tags'] 
     success_url = reverse_lazy('post_list')  # Redirect to post list after creating a post
 
     def form_valid(self, form):
@@ -65,8 +78,6 @@ class PostDetailView(DetailView):
 
 
 
-from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
-from django.contrib.postgres.search import TrigramSimilarity
 
 def post_search(request):
     query = request.GET.get('query', '')
@@ -78,15 +89,10 @@ def post_search(request):
     ).filter(rank__gte=0.3).order_by('-rank')
     return render(request, 'search_results.html', {'results': results, 'query': query})
 
-
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from .models import Post, Comment
-
 @login_required
 def profile(request):
     user = request.user  # Get the currently logged-in user
-    
+
     return render(request, 'profile.html', {'user': user})
 
 @login_required
@@ -97,14 +103,6 @@ def add_comment(request, pk):
         Comment.objects.create(post=post, author=request.user, text=text)
     return redirect('post_detail', pk=pk)
 
-# @login_required
-# def like_comment(request, pk):
-#     comment = get_object_or_404(Comment, pk=pk)
-#     if request.user in comment.likes.all():
-#         comment.likes.remove(request.user)
-#     else:
-#         comment.likes.add(request.user)
-#     return redirect('post_detail', pk=comment.post.pk)
 
 @login_required
 def like_comment(request, pk):
@@ -116,10 +114,6 @@ def like_comment(request, pk):
         comment.likes.add(request.user)
     return redirect('post_detail', pk=post_pk)
 
-
-
-from django.core.mail import send_mail
-from django.conf import settings
 
 def share_post(request, pk):
     post = get_object_or_404(Post, pk=pk)
@@ -135,38 +129,34 @@ def share_post(request, pk):
         return redirect('post_detail', pk=pk)
     return render(request, 'share_post.html', {'post': post})
 
-from django.contrib.auth import logout
+
 def user_logout(request):
     logout(request)
     return redirect('login')
 
 
-from django.views.generic import UpdateView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.urls import reverse_lazy
-from .models import Post
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
-    template_name = 'post_form.html'  # Reusing the same form template
-    fields = ['title', 'content', 'tags']  # Adjust fields based on your Post model
+    template_name = 'post_form.html'  
+    fields = ['title', 'content', 'tags']  
 
     def form_valid(self, form):
-        form.instance.author = self.request.user  # Set the author to the logged-in user
+        form.instance.author = self.request.user  
         return super().form_valid(form)
 
     def test_func(self):
         post = self.get_object()
-        return self.request.user == post.author  # Ensure the user is the author of the post
+        return self.request.user == post.author 
 
     def get_success_url(self):
-        return reverse_lazy('post_detail', kwargs={'pk': self.object.pk})  # Redirect to the post detail after updating
+        return reverse_lazy('post_detail', kwargs={'pk': self.object.pk}) 
 
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
-    template_name = 'delete.html'  # A specific template for confirming deletion
-    success_url = reverse_lazy('post_list')  # Redirect to the post list after deletion
+    template_name = 'delete.html' 
+    success_url = reverse_lazy('post_list') 
 
     def test_func(self):
         post = self.get_object()
-        return self.request.user == post.author  # Ensure only the author can delete the post
+        return self.request.user == post.author 

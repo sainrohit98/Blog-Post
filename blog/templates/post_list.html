@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Blog Posts{% endblock %}
+
+{% block content %}
+{% load static %}
+<style>
+
+    body {
+        background-color: #f0f2f5;
+        
+ 
+ 
+    }
+    .content-wrapper {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        
+    }
+    .post-card {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        overflow: hidden;
+        background-color: #ffffff;
+        {% comment %} background-image: url('{% static 'images/blogpng.webp' %}');
+        background-size:1000px 300px; {% endcomment %}
+        
+ 
+        {% comment %} background-image: url('{% static 'images/blogpng.webp' %}'); {% endcomment %}
+    }
+    .post-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        
+    }
+    .post-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e5e7eb;
+        
+    }
+    .author-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #4b5563;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #ffffff;
+        margin-right: 12px;
+    }
+    .post-content {
+        padding: 16px;
+        
+    }
+    .post-footer {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border-top: 1px solid #e5e7eb;
+    }
+    .tag {
+        transition: all 0.2s ease;
+    }
+    .tag:hover {
+        transform: translateY(-2px);
+    }
+    .search-form {
+        max-width: 600px;
+        margin: 0 auto 2rem;
+    }
+    .search-input {
+        transition: all 0.3s ease;
+    }
+    .search-input:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+    }
+    .search-button {
+        transition: all 0.3s ease;
+    }
+    .search-button:hover {
+        transform: translateY(-2px);
+    }
+    .pagination-link {
+        transition: all 0.3s ease;
+    }
+    .pagination-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<div class="content-wrapper">
+    <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">Blog Posts</h1>
+
+    <div class="search-form">
+        <form action="{% url 'post_search' %}" method="get" class="flex">
+            <input type="text" name="query" placeholder="Search posts..." class="search-input flex-grow p-3 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <button type="submit" class="search-button bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-r-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </form>
+    </div>
+
+    {% for post in posts %}
+        <div class="post-card shadow-md mb-6">
+            <div class="post-header">
+                <div class="author-avatar">
+                    {{ post.author.username|first|upper }}
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold">{{ post.author }}</h2>
+                    <p class="text-sm text-gray-500">{{ post.created_date|date:"F d, Y" }}</p>
+                </div>
+            </div>
+            <div class="post-content">
+                <h3 class="text-2xl font-bold mb-3">
+                    <a href="{% url 'post_detail' post.id %}" class="text-blue-600 hover:text-blue-800">{{ post.title }}</a>
+                </h3>
+                <p class="text-gray-700 mb-4">{{ post.content|truncatewords:30 }}</p>
+                <div class="flex flex-wrap">
+                    {% for tag in post.tags.all %}
+                        <span class="tag bg-blue-100 text-blue-800 rounded-full px-3 py-1 text-sm font-semibold mr-2 mb-2">#{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+            
+            </div>
+            <div class="post-footer">
+      
+                <div class="flex items-center text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd" />
+                    </svg>
+                    <span>{{ post.comments.count }} comments</span>
+                </div>
+                <a href="{% url 'post_detail' post.id %}" class="text-blue-500 hover:text-blue-700 font-semibold">Read more</a>
+            
+            </div>
+        </div>
+    {% empty %}
+        <p class="text-center text-gray-600 italic">No posts found.</p>
+    {% endfor %}
+
+    {% if is_paginated %}
+        <div class="flex justify-between mt-8">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="pagination-link bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Previous</a>
+            {% else %}
+                <div></div>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="pagination-link bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Next</a>
+            {% else %}
+                <div></div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

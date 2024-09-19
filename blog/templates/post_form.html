@@ -1,0 +1,30 @@
+<!-- post_form.html -->
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Edit Post{% else %}New Post{% endif %}{% endblock %}
+
+{% block content %}
+    <h1 class="text-3xl font-bold mb-6">{% if form.instance.pk %}Edit Post{% else %}New Post{% endif %}</h1>
+    <form method="post" class="bg-white p-6 rounded-lg shadow-md">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="mb-4">
+            <label for="{{ form.title.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">Title</label>
+            {{ form.title }}
+            {{ form.title.errors }}
+        </div>
+        <div class="mb-4">
+            <label for="{{ form.content.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">Content</label>
+            {{ form.content }}
+            {{ form.content.errors }}
+        </div>
+        <div class="mb-4">
+            <label for="{{ form.tags.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">Tags</label>
+            {{ form.tags }}
+            {{ form.tags.errors }}
+        </div>
+        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            {% if form.instance.pk %}Update{% else %}Create{% endif %}
+        </button>
+    </form>
+{% endblock %}
